@@ -1,0 +1,11 @@
+Mock backend running at http://localhost:4000
+Employee API keys: Hasnain=test-key-123, Ayesha=emp-key-ayesha, Bilal=emp-key-bilal
+Seeded projects: "our-project" (2 tasks), "client-b" (1 task)
+Admin summary: GET /admin/employees
+PATCH /tasks/1/timelog [project: our-project]
+  → [Hasnain] Fix login bug: +30 min (total 30 min) — "fixed login"
+PATCH /tasks/1/timelog [project: our-project]
+  → [Ayesha] Fix login bug: +20 min (total 50 min) — "code review"
+PATCH /tasks/2/timelog [project: our-project]
+  → [Bilal] Write docs: +45 min (total 45 min) — "wrote docs"
+GET /admin/employees [project: none]

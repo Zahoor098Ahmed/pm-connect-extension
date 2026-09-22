@@ -1,0 +1,10 @@
+.vscode/**
+test/**
+.gitignore
+jest.config.js
+**/*.map
+mock-server/**
+mock-server.log
+handoff-package/**
+*.vsix
+*.zip

@@ -1,0 +1,214 @@
+{
+  "name": "pm-connect",
+  "displayName": "PM Connect",
+  "description": "Connect VS Code to your project management tool — Custom REST API, Trello, and more.",
+  "version": "0.1.0",
+  "publisher": "time-global-tech",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/time-global-tech/pm-connect.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*",
+    "onStartupFinished"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pmConnect.createTask",
+        "title": "PM Connect: Create Task"
+      },
+      {
+        "command": "pmConnect.syncProject",
+        "title": "PM Connect: Sync Project"
+      },
+      {
+        "command": "pmConnect.viewMyTasks",
+        "title": "PM Connect: Refresh My Tasks"
+      },
+      {
+        "command": "pmConnect.updateStatus",
+        "title": "PM Connect: Update Task Status"
+      },
+      {
+        "command": "pmConnect.switchProvider",
+        "title": "PM Connect: Switch Provider"
+      },
+      {
+        "command": "pmConnect.openSettings",
+        "title": "PM Connect: Open Settings"
+      },
+      {
+        "command": "pmConnect.refreshReports",
+        "title": "PM Connect: Refresh Reports",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pmConnect.openReport",
+        "title": "PM Connect: Open Report"
+      },
+      {
+        "command": "pmConnect.addGitHubComment",
+        "title": "PM Connect: Add GitHub Comment"
+      },
+      {
+        "command": "pmConnect.showLogs",
+        "title": "PM Connect: Show Logs"
+      },
+      {
+        "command": "pmConnect.viewPendingQueue",
+        "title": "PM Connect: View Pending Queue"
+      },
+      {
+        "command": "pmConnect.statusBarMenu",
+        "title": "PM Connect: Status Menu"
+      },
+      {
+        "command": "pmConnect.viewChangedPages",
+        "title": "PM Connect: View Changed Pages / Files",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "pmConnect.viewAllComments",
+        "title": "PM Connect: View All Comments & Daily Logs",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "pmConnect.disconnect",
+        "title": "PM Connect: Disconnect",
+        "icon": "$(plug)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pmConnect",
+          "title": "PM Connect",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "pmConnect": [
+        {
+          "id": "pmConnectTasks",
+          "name": "My Tasks"
+        },
+        {
+          "id": "pmConnectReports",
+          "name": "Reports"
+        },
+        {
+          "id": "pmConnectActivityLogs",
+          "name": "Activity & Sync Logs"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "pmConnect.refreshReports",
+          "when": "view == pmConnectReports",
+          "group": "navigation@1"
+        },
+        {
+          "command": "pmConnect.viewChangedPages",
+          "when": "view == pmConnectReports",
+          "group": "navigation@2"
+        },
+        {
+          "command": "pmConnect.viewAllComments",
+          "when": "view == pmConnectReports",
+          "group": "navigation@3"
+        },
+        {
+          "command": "pmConnect.disconnect",
+          "when": "view == pmConnectReports",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "PM Connect",
+      "properties": {
+        "pmConnect.provider": {
+          "type": "string",
+          "enum": [
+            "custom",
+            "trello"
+          ],
+          "default": "custom",
+          "scope": "resource",
+          "description": "Which project management provider is active."
+        },
+        "pmConnect.custom.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Base URL for your Custom REST API."
+        },
+        "pmConnect.custom.siteUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Base URL of the Projex website (e.g. http://localhost/projex) for reports."
+        },
+        "pmConnect.custom.paths": {
+          "type": "object",
+          "default": {
+            "createTask": "/tasks",
+            "updateStatus": "/tasks/{id}/status",
+            "listMyTasks": "/tasks/mine",
+            "reportProgress": "/tasks/{id}/progress",
+            "logTime": "/tasks/{id}/timelog",
+            "listProjects": "/projects",
+            "markProjectStarted": "/projects/start",
+            "logCommitHeartbeat": "/commits",
+            "logActiveHeartbeat": "/activity/heartbeat",
+            "getRollup": "/reports/rollup"
+          },
+          "description": "Endpoint path overrides for the Custom provider."
+        },
+        "pmConnect.custom.projectId": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Scopes every request to a single project (sent as X-Project-Id). Set this per-workspace (in that project's .vscode/settings.json) so a developer connected to multiple clients only sees this project's tasks, never a different one."
+        },
+        "pmConnect.trello.boardId": {
+          "type": "string",
+          "default": "",
+          "description": "Trello board ID to sync tasks with."
+        },
+        "pmConnect.trello.listId": {
+          "type": "string",
+          "default": "",
+          "description": "Trello list ID new tasks are created in."
+        },
+        "pmConnect.activity.idleThresholdMinutes": {
+          "type": "number",
+          "default": 5,
+          "description": "Minutes of no editor activity before automatic active-time tracking treats you as idle and stops counting."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "jest",
+    "mock-server": "node mock-server/server.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@vscode/vsce": "^2.24.0",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}
