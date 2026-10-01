@@ -77,10 +77,23 @@ describe("gitProgress", () => {
     expect(gitProgress.changedFiles("/repo", "abc123")).toEqual([]);
   });
 
-  it("changedFiles returns [] instead of throwing if git fails", () => {
+  it("getUncommittedFiles parses modified and untracked files from git status", () => {
+    execSync.mockReturnValue(" M src/index.ts\n?? newfile.js\nR  old.ts -> renamed.ts\n");
+    const files = gitProgress.getUncommittedFiles("/repo");
+    expect(files).toEqual(["src/index.ts", "newfile.js", "renamed.ts"]);
+    expect(execSync).toHaveBeenCalledWith(
+      "git status --porcelain",
+      expect.objectContaining({ cwd: "/repo" })
+    );
+  });
+
+  it("getUncommittedFiles returns [] safely if git status fails or output is empty", () => {
+    execSync.mockReturnValue("");
+    expect(gitProgress.getUncommittedFiles("/repo")).toEqual([]);
+
     execSync.mockImplementation(() => {
-      throw new Error("not a git repo");
+      throw new Error("git error");
     });
-    expect(gitProgress.changedFiles("/repo", "abc123")).toEqual([]);
+    expect(gitProgress.getUncommittedFiles("/repo")).toEqual([]);
   });
 });

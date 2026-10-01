@@ -18,8 +18,10 @@ const { activityLog } = require("./activityLog");
 const { syncManager } = require("./syncManager");
 const { ActivityLogsTreeDataProvider } = require("./activityLogsTreeView");
 const { activityLogStore } = require("./activityLogStore");
+const { backendResolver } = require("./backendResolver");
 const { getLatestOpenIssue, postComment, fetchRecentComments } = require("./githubComments");
-const { ensureBacklogFile } = require("./backlogFile");
+const { ensureBacklogFile, getTimeSummaryFromBacklog } = require("./backlogFile");
+const { syncedTimeTracker } = require("./syncedTimeTracker");
 
 const EMPLOYEE_ID_PATTERN = /^EMP\d+$/i;
 
@@ -42,6 +44,7 @@ function activate(context) {
 
   offlineQueue.init(storageDir);
   dailySummaryTracker.init(storageDir);
+  syncedTimeTracker.init(storageDir);
   activityLog.init(storageDir);
   activityLogStore.init(storageDir);
 
@@ -100,6 +103,13 @@ function activate(context) {
   const statusBar = new PmConnectStatusBar();
   context.subscriptions.push(statusBar);
 
+  // Local-first, live-fallback: checks whether a local dev ERP is up every
+  // 30s in the background; everything (commits, heartbeats, "Open Report",
+  // sync) automatically targets whichever one is actually reachable, no
+  // manual URL switching required.
+  const backendResolverDisposable = backendResolver.startBackgroundRefresh(providerContext.getConfig);
+  context.subscriptions.push(backendResolverDisposable);
+
   syncManager.init({
     outputChannel,
     statusBar,
@@ -107,14 +117,17 @@ function activate(context) {
       const configured = providerContext.getConfig("pmConnect.custom.projectId", "");
       return configured && !EMPLOYEE_ID_PATTERN.test(configured) ? String(configured) : null;
     },
+    getApiKey: () => providerContext.getSecret("pmConnect.custom.apiKey"),
+    refreshAuthToken: () => tryAutoMatch(),
   });
+  providerContext.refreshAuthToken = () => tryAutoMatch();
   context.subscriptions.push(syncManager);
 
   // Periodic 5-minute background sync
   syncManager.startPeriodicSync(() => {
     const providerId = getActiveProviderId(providerContext.getConfig);
     if (providerId === "custom") {
-      return providerContext.getConfig("pmConnect.custom.baseUrl", "");
+      return backendResolver.getCachedBaseUrl(providerContext.getConfig);
     }
     return null;
   });
@@ -126,8 +139,11 @@ function activate(context) {
     statusBar.setProject(initialProjectId);
     statusBar.setState("idle");
     syncManager.updateStatusBar(initialProjectId);
-    const initialBaseUrl = providerContext.getConfig("pmConnect.custom.baseUrl", "");
-    void syncManager.syncPendingLogs(initialBaseUrl);
+    void backendResolver.refresh(providerContext.getConfig).then((initialBaseUrl) => {
+      void tryAutoMatch().then(() => {
+        void syncManager.syncPendingLogs(initialBaseUrl);
+      });
+    });
   } else {
     statusBar.setProject("");
     statusBar.setState("disconnected");
@@ -330,45 +346,84 @@ function activate(context) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("pmConnect.syncProject", async () => {
-      const provider = activeProvider();
-      const editor = vscode.window.activeTextEditor;
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-
-      // Same Employee-ID case as Create Task: no single project to sync
-      // into, so ask which one explicitly before doing anything else.
-      let projectIdOverride;
-      const configuredProjectId = providerContext.getConfig("pmConnect.custom.projectId", "");
-      if (provider.id === "custom" && /^EMP\d+$/i.test(configuredProjectId)) {
-        const projects = await withErrorHandling(() => provider.listProjects(providerContext));
-        if (!projects) return;
-        const picked = await vscode.window.showQuickPick(
-          projects.map((p) => ({ label: p.name, id: p.id })),
-          { placeHolder: "Which project should this sync go into?" }
-        );
-        if (!picked) return;
-        projectIdOverride = picked.id;
-      }
-
       statusBar.setState("syncing");
-      const result = await withErrorHandling(() =>
-        provider.syncFileOrProject(
-          {
-            fileName: editor?.document.fileName,
-            workspaceName: workspaceFolder?.name,
-            projectIdOverride,
-          },
-          providerContext
-        )
-      );
+      const baseUrl = backendResolver.getCachedBaseUrl(providerContext.getConfig);
+      const syncedLogsCount = (await syncManager.syncPendingLogs(baseUrl)) || 0;
 
-      if (result?.success) {
-        statusBar.setState("idle");
-        vscode.window.showInformationMessage("Sync complete.");
-        void syncManager.syncPendingLogs();
-      } else {
-        statusBar.setState("error", result?.message);
-        void syncManager.syncPendingLogs();
+      // Accurately sync today's work and cumulative total work from BACKLOG.md to ERP
+      const activeFolder = vscode.workspace.workspaceFolders?.[0];
+      const timeSummary = getTimeSummaryFromBacklog(activeFolder);
+      const currentProjId = providerContext.getConfig("pmConnect.custom.projectId", "") || activeFolder?.name || "";
+
+      let syncedNewTimeMinutes = 0;
+      let timeAlreadySynced = false;
+
+      if (timeSummary && currentProjId) {
+        const pendingItems = syncedTimeTracker.getPendingSyncItems(currentProjId, timeSummary.dateBreakdown || []);
+        const unsyncedDeltaMinutes = pendingItems.reduce((acc, it) => acc + (it.unsyncedDelta || 0), 0);
+
+        try {
+          const provider = getProvider(getActiveProviderId(providerContext));
+          if (provider && typeof provider.syncTimeSummary === "function") {
+            const res = await provider.syncTimeSummary(
+              {
+                projectId: currentProjId,
+                todayMinutes: timeSummary.todayMinutes,
+                totalMinutes: timeSummary.totalMinutes,
+                dateBreakdown: timeSummary.dateBreakdown,
+                unsyncedDeltaMinutes,
+              },
+              providerContext,
+              { baseUrl }
+            );
+
+            if (res && res.success && !res.skipped) {
+              syncedTimeTracker.recordBatchSynced(currentProjId, timeSummary.dateBreakdown);
+              syncedNewTimeMinutes = unsyncedDeltaMinutes;
+              if (unsyncedDeltaMinutes > 0) {
+                outputChannel.appendLine(
+                  `[${new Date().toISOString().replace("T", " ").slice(0, 19)}] [TIME SYNC] ✅ BACKLOG.md Time Synced to ERP: Today = ${timeSummary.todayMinutes}m (${timeSummary.todayHours}h) | Total (Start to Today) = ${timeSummary.totalMinutes}m (${timeSummary.totalHours}h) [+${unsyncedDeltaMinutes}m new across ${pendingItems.length} date(s)]`
+                );
+              } else {
+                timeAlreadySynced = true;
+                outputChannel.appendLine(
+                  `[${new Date().toISOString().replace("T", " ").slice(0, 19)}] [TIME SYNC] ℹ️ All BACKLOG.md time is calibrated in ERP (${timeSummary.todayMinutes}m today | ${timeSummary.totalMinutes}m total). No new delta.`
+                );
+              }
+            }
+          }
+        } catch (err) {
+          outputChannel.appendLine(`[TIME SYNC] ⚠️ Error syncing time to ERP: ${err.message}`);
+        }
       }
+
+      await refreshReports();
+
+      const remaining = offlineQueue.getPendingCount();
+      const todayHrs = timeSummary?.todayHours || "0.00";
+      const totalHrs = timeSummary?.totalHours || "0.00";
+      if (remaining === 0) {
+        statusBar.setState("idle");
+        if (syncedLogsCount === 0 && (timeAlreadySynced || syncedNewTimeMinutes === 0)) {
+          vscode.window.showInformationMessage(
+            `ℹ️ PM Connect: No new changes detected — all logs and tracked time are already up-to-date in ERP!\n• Today's Work: ${timeSummary?.todayMinutes || 0}m (${todayHrs} hrs)\n• Start to Today: ${timeSummary?.totalMinutes || 0}m (${totalHrs} hrs)`
+          );
+        } else {
+          const newTimeMsg = syncedNewTimeMinutes > 0 ? ` (+${syncedNewTimeMinutes}m new time synced)` : "";
+          vscode.window.showInformationMessage(
+            `✅ Sync complete — all logs & time synced to ERP!${newTimeMsg}\n• Today's Work: ${timeSummary?.todayMinutes || 0}m (${todayHrs} hrs)\n• Start to Today: ${timeSummary?.totalMinutes || 0}m (${totalHrs} hrs)`
+          );
+        }
+      } else {
+        statusBar.setState("error", `${remaining} log(s) still pending — backend may be unreachable.`);
+        vscode.window.showWarningMessage(`PM Connect: ${remaining} log(s) still pending, will keep retrying.`);
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("pmConnect.syncTimeFromBacklog", async () => {
+      await vscode.commands.executeCommand("pmConnect.syncProject");
     })
   );
 
@@ -404,6 +459,11 @@ function activate(context) {
       const count = isConnected ? offlineQueue.getPendingCount(currentProjId) : 0;
       const todayMin = isConnected ? dailySummaryTracker.getTodayMinutes(currentProjId) : 0;
       const activeFolder = vscode.workspace.workspaceFolders?.[0];
+      const timeSummary = getTimeSummaryFromBacklog(activeFolder);
+      const todayBacklogMin = timeSummary?.todayMinutes || 0;
+      const totalBacklogMin = timeSummary?.totalMinutes || 0;
+      const todayBacklogHrs = timeSummary?.todayHours || "0.00";
+      const totalBacklogHrs = timeSummary?.totalHours || "0.00";
       const sessionFiles = typeof getCurrentSessionFiles === "function" ? getCurrentSessionFiles(activeFolder?.uri?.fsPath) : [];
       const rawToday = isConnected ? activityLog.getTodayFiles(currentProjId) : [];
       const todayFiles = Array.from(new Set([...rawToday, ...sessionFiles])).filter((f) => {
@@ -414,6 +474,9 @@ function activate(context) {
         }
         return true;
       });
+
+      const pendingTimeItems = syncedTimeTracker.getPendingSyncItems(currentProjId, timeSummary?.dateBreakdown || []);
+      const unsyncedTimeDelta = pendingTimeItems.reduce((acc, it) => acc + (it.unsyncedDelta || 0), 0);
 
       const items = [
         isConnected
@@ -428,6 +491,13 @@ function activate(context) {
               action: "connect",
             },
         {
+          label: (unsyncedTimeDelta > 0 || count > 0)
+            ? `$(sync) Sync Project & Flush Queue (${unsyncedTimeDelta > 0 ? `+${unsyncedTimeDelta}m new time` : ""}${unsyncedTimeDelta > 0 && count > 0 ? ", " : ""}${count > 0 ? `${count} logs pending` : ""})`
+            : `$(pass) Sync Project to ERP (All up-to-date • Today: ${todayBacklogMin}m)`,
+          description: `Today: ${todayBacklogMin}m (${todayBacklogHrs}h) • Start to Today: ${totalBacklogMin}m (${totalBacklogHrs}h) [Click to sync all logs & time]`,
+          action: "sync",
+        },
+        {
           label: `$(file-code) View Today's Changed Files (${todayFiles.length})`,
           description: "See all files modified today since morning",
           action: "pages",
@@ -441,11 +511,6 @@ function activate(context) {
           label: "$(output) Show Live Output Logs",
           description: "Open PM Connect log channel",
           action: "logs",
-        },
-        {
-          label: "$(sync) Sync Project & Flush Queue",
-          description: count > 0 ? `${count} logs pending` : "All synced",
-          action: "sync",
         },
         {
           label: "$(globe) Open This Project's Report in ERP",
@@ -468,7 +533,7 @@ function activate(context) {
           : []),
         {
           label: "$(graph) Refresh Reports",
-          description: `Today: ${todayMin} min tracked`,
+          description: `Today: ${todayBacklogMin} min tracked (${todayBacklogHrs} hrs)`,
           action: "reports",
         },
         {
@@ -493,11 +558,12 @@ function activate(context) {
       }
 
       const pick = await vscode.window.showQuickPick(items, {
-        placeHolder: `PM Connect (${count} pending logs • ${todayMin}m active today • ${todayFiles.length} files modified)`,
+        placeHolder: `PM Connect (${count} pending • Today: ${todayBacklogMin}m [${todayBacklogHrs}h] • Total: ${totalBacklogMin}m [${totalBacklogHrs}h] • ${todayFiles.length} files)`,
       });
 
       if (!pick) return;
-      if (pick.action === "pages") await vscode.commands.executeCommand("pmConnect.viewChangedPages");
+      if (pick.action === "syncTime") await vscode.commands.executeCommand("pmConnect.syncTimeFromBacklog");
+      else if (pick.action === "pages") await vscode.commands.executeCommand("pmConnect.viewChangedPages");
       else if (pick.action === "allComments") await vscode.commands.executeCommand("pmConnect.viewAllComments");
       else if (pick.action === "logs") await vscode.commands.executeCommand("pmConnect.showLogs");
       else if (pick.action === "sync") await vscode.commands.executeCommand("pmConnect.syncProject");
@@ -852,12 +918,17 @@ function activate(context) {
       // The ERP is the Global Tech CRM (a React SPA) — the project's own
       // "VS Dev Activity" tab is its report, at /project/{id}, not a
       // separate report.php page (that was the old projex/PHP backend).
-      const siteUrl = providerContext.getConfig("pmConnect.custom.siteUrl", "");
+      // Whichever backend (local dev ERP or live) is currently active is
+      // also whichever website should open — same local-first, live-fallback
+      // logic as everything else.
+      const siteUrl = backendResolver.isCachedLocal()
+        ? providerContext.getConfig("pmConnect.custom.localSiteUrl", "")
+        : providerContext.getConfig("pmConnect.custom.siteUrl", "");
       let finalUrl = "";
       if (siteUrl) {
         finalUrl = `${siteUrl.replace(/\/+$/, "")}/project/${projectId}`;
       } else {
-        const baseUrl = providerContext.getConfig("pmConnect.custom.baseUrl", "");
+        const baseUrl = backendResolver.getCachedBaseUrl(providerContext.getConfig);
         if (baseUrl) {
           let derived = baseUrl.replace(/\/+$/, "");
           if (derived.endsWith("/api/pmconnect")) {
@@ -922,13 +993,13 @@ function activate(context) {
         const recent = await fetchRecentComments(token, repo, issue.number);
         const found = recent.some((c) => c.body === commentBody);
         if (found) {
-          vscode.window.showInformationMessage("Aapka comment mil gaya!");
+          vscode.window.showInformationMessage("Comment posted and verified on GitHub!");
         } else {
-          vscode.window.showErrorMessage("Comment nahin mil raha");
+          vscode.window.showErrorMessage("Could not verify posted comment on GitHub.");
         }
       } catch (err) {
         console.error("[PM Connect] GitHub comment error:", err);
-        vscode.window.showErrorMessage("Comment nahin mil raha");
+        vscode.window.showErrorMessage(`Error posting GitHub comment: ${err.message}`);
       }
     })
   );
@@ -962,10 +1033,10 @@ function activate(context) {
    */
   async function tryAutoMatch() {
     const providerId = getActiveProviderId(providerContext.getConfig);
-    if (providerId !== "custom") return;
+    if (providerId !== "custom") return null;
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return;
+    if (!workspaceFolder) return null;
 
     const cwd = workspaceFolder.uri.fsPath;
     const gitEmail = gitUserEmail(cwd);
@@ -973,13 +1044,7 @@ function activate(context) {
     const machineUsername = os.userInfo().username || process.env.USERNAME || process.env.USER || "";
     const workspaceFolderName = workspaceFolder.name;
 
-    let baseUrl = providerContext.getConfig("pmConnect.custom.baseUrl", "");
-    if (!baseUrl) {
-      baseUrl = "https://crm.tgailab.site/api/pmconnect";
-      await vscode.workspace
-        .getConfiguration()
-        .update("pmConnect.custom.baseUrl", baseUrl, vscode.ConfigurationTarget.Global);
-    }
+    await backendResolver.refresh(providerContext.getConfig);
 
     try {
       const provider = getProvider("custom");
@@ -996,20 +1061,23 @@ function activate(context) {
 
         if (hasApiKey !== result.apiKey) {
           await providerContext.setSecret("pmConnect.custom.apiKey", result.apiKey);
-          console.log(`[PM Connect] Updated API Key for matched developer.`);
+          outputChannel.appendLine(`[PM Connect] Updated API Key for matched developer.`);
         }
         if (String(configuredProjectId) !== String(result.projectId)) {
           await vscode.workspace
             .getConfiguration()
             .update("pmConnect.custom.projectId", String(result.projectId), vscode.ConfigurationTarget.Workspace);
-          console.log(`[PM Connect] Updated Project ID to: ${result.projectId}`);
+          outputChannel.appendLine(`[PM Connect] Updated Project ID to: ${result.projectId}`);
         }
 
         await context.workspaceState.update("pmConnect.setupDone", true);
-        console.log(`[PM Connect] Auto-match successful. Project ID: ${result.projectId}`);
+        outputChannel.appendLine(`[PM Connect] Auto-match successful. Project ID: ${result.projectId}`);
+        return result.apiKey;
       }
+      return null;
     } catch (err) {
       console.error("[PM Connect] Auto-match failed silently:", err);
+      return null;
     }
   }
 

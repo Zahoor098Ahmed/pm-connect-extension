@@ -4,11 +4,14 @@ const { createMockContext } = require("./testUtil");
 jest.mock("node-fetch", () => jest.fn());
 const fetchMock = require("node-fetch");
 
+const { backendResolver } = require("../src/backendResolver");
+
 describe("CustomProvider", () => {
   const provider = new CustomProvider();
 
   beforeEach(() => {
     fetchMock.mockReset();
+    backendResolver.reset();
   });
 
   it("creates a task via POST to the configured base URL + path", async () => {

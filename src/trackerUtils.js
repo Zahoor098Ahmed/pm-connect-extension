@@ -10,8 +10,10 @@ function computeIdleGate(lastActivityAt, now, idleThresholdMs) {
 }
 
 /** How many seconds this tick should add to the pending buffer. */
-function accumulateSeconds(windowFocused, isIdle, tickSeconds) {
-  return windowFocused && !isIdle ? tickSeconds : 0;
+function accumulateSeconds(windowFocused, isIdle, tickSeconds, hasRecentActivity = false) {
+  return !isIdle && (windowFocused || hasRecentActivity) ? tickSeconds : 0;
 }
 
 module.exports = { shouldFallbackPoll, computeIdleGate, accumulateSeconds };
+
+

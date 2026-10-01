@@ -127,6 +127,28 @@ function appendCommit(folder, { commitSha, commitMessage, filesChanged = [], tim
   appendToDateSection(folder, date, block);
 }
 
+function parseSec(str) {
+  if (!str) return null;
+  const parts = String(str).trim().split(":").map((p) => parseInt(p, 10));
+  if (parts.some(isNaN) || parts.length < 2) return null;
+  const [h, m, s = 0] = parts;
+  return h * 3600 + m * 60 + s;
+}
+
+/**
+ * Calculates elapsed minutes between two HH:MM or HH:MM:SS time strings.
+ * Handles overnight rollovers gracefully.
+ */
+function calculateMinutesBetween(startTimeStr, endTimeStr) {
+  if (!startTimeStr || !endTimeStr) return 0;
+  const s1 = parseSec(startTimeStr);
+  const s2 = parseSec(endTimeStr);
+  if (s1 === null || s2 === null) return 0;
+  let diffSec = s2 - s1;
+  if (diffSec < 0) diffSec += 24 * 3600; // overnight crossing
+  return Math.round(diffSec / 60);
+}
+
 /**
  * Records or updates an active coding session into the project's backlog file.
  * If a session starting with startTime already exists under today's date, it updates in-place.
@@ -138,14 +160,43 @@ function recordOrUpdateSession(folder, { startTime, endTime, durationMinutes, fi
     if (!filePath) return;
 
     const date = getLocalDateString();
-    const duration = Math.max(1, parseInt(durationMinutes, 10) || 1);
+    // The block always shows "start – end" right next to the minute count,
+    // so the count must equal that same span — otherwise "10:46 – 10:54 (6
+    // min)" reads as a contradiction even though it's a real 7-8 min gap.
+    const s1 = parseSec(startTime);
+    const s2 = parseSec(endTime);
+    let duration = 1;
+    if (s1 !== null && s2 !== null) {
+      let diffSec = s2 - s1;
+      if (diffSec < 0) diffSec += 24 * 3600;
+      const wallClockMin = Math.round(diffSec / 60);
+      duration = wallClockMin > 0 ? wallClockMin : 1;
+    } else {
+      duration = Math.max(1, parseInt(durationMinutes, 10) || 1);
+    }
     const dateHeader = `## ${date}`;
 
     let block = `- **${startTime} – ${endTime}** ⏱️ Active Coding Session (**${duration} min**)`;
     if (Array.isArray(filesChanged) && filesChanged.length > 0) {
-      block += `\n  - 📁 **Files Worked On (${filesChanged.length}):**`;
-      for (const file of filesChanged) {
-        block += `\n    - \`${file}\``;
+      const validFiles = filesChanged.filter((f) => {
+        if (!f) return false;
+        const clean = String(f).replace(/\\/g, "/").toLowerCase();
+        return (
+          clean !== ".git" &&
+          !clean.startsWith(".git/") &&
+          !clean.includes("/.git/") &&
+          clean !== "node_modules" &&
+          !clean.startsWith("node_modules/") &&
+          !clean.includes("/node_modules/") &&
+          !clean.endsWith("backlog.md") &&
+          !clean.endsWith(".tmp")
+        );
+      });
+      if (validFiles.length > 0) {
+        block += `\n  - 📁 **Files Worked On (${validFiles.length}):**`;
+        for (const file of validFiles) {
+          block += `\n    - \`${file}\``;
+        }
       }
     }
 
@@ -163,8 +214,12 @@ function recordOrUpdateSession(folder, { startTime, endTime, durationMinutes, fi
     const sectionEndIdx = nextHeaderMatch === -1 ? content.length : dateIdx + dateHeader.length + nextHeaderMatch;
 
     const sectionContent = content.slice(dateIdx, sectionEndIdx);
-    const sessionPrefix = `- **${startTime} – `;
-    const sessionIdx = sectionContent.indexOf(sessionPrefix);
+    let sessionPrefix = `- **${startTime} – `;
+    let sessionIdx = sectionContent.indexOf(sessionPrefix);
+    if (sessionIdx === -1) {
+      sessionPrefix = `- **${startTime} - `;
+      sessionIdx = sectionContent.indexOf(sessionPrefix);
+    }
 
     if (sessionIdx !== -1) {
       const absStart = dateIdx + sessionIdx;
@@ -193,6 +248,99 @@ function appendSession(folder, opts) {
   recordOrUpdateSession(folder, opts);
 }
 
+/**
+ * Accurately parses BACKLOG.md to calculate:
+ * - todayMinutes: Total minutes active today
+ * - totalMinutes: Cumulative minutes from the very start until today
+ * - dateBreakdown: Array of { date, minutes, hours }
+ * - firstDate: First recorded date
+ */
+function getTimeSummaryFromBacklog(folder) {
+  try {
+    const filePath = getBacklogPath(folder);
+    if (!filePath || !fs.existsSync(filePath)) {
+      return { todayMinutes: 0, totalMinutes: 0, todayHours: "0.00", totalHours: "0.00", dateBreakdown: [], firstDate: null };
+    }
+
+    const content = fs.readFileSync(filePath, "utf8");
+    const lines = content.split("\n");
+    const today = getLocalDateString();
+    let currentDate = null;
+    const dateTotals = {};
+    const dateFiles = {};
+
+    for (const line of lines) {
+      const dateMatch = line.match(/^##\s+(\d{4}-\d{2}-\d{2})/);
+      if (dateMatch) {
+        currentDate = dateMatch[1];
+        if (dateTotals[currentDate] === undefined) {
+          dateTotals[currentDate] = 0;
+          dateFiles[currentDate] = new Set();
+        }
+        continue;
+      }
+
+      // Match files worked on like: - `src/filename.ext`
+      const fileMatch = line.match(/^\s*-\s*`([^`]+)`/);
+      if (fileMatch && currentDate) {
+        if (!dateFiles[currentDate]) dateFiles[currentDate] = new Set();
+        dateFiles[currentDate].add(fileMatch[1].trim());
+      }
+
+      // Match sessions like: Active Coding Session (**4 min**) or (**1 hr 20 min**)
+      const sessionMatch = line.match(/Active Coding Session\s*\(\*\*([^*]+)\*\*\)/i);
+      if (sessionMatch && currentDate) {
+        const durStr = sessionMatch[1].trim();
+        let minutes = 0;
+        const hrMatch = durStr.match(/(\d+)\s*(?:hr|hour)s?/i);
+        const minMatch = durStr.match(/(\d+)\s*min/i);
+        if (hrMatch) minutes += parseInt(hrMatch[1], 10) * 60;
+        if (minMatch) minutes += parseInt(minMatch[1], 10);
+        if (!hrMatch && !minMatch) {
+          const justNum = parseInt(durStr, 10);
+          if (!isNaN(justNum)) minutes += justNum;
+        }
+
+        // Safety reconciliation: if logged minutes is 1, but the line's time span (startTime - endTime)
+        // is clearly larger (e.g. 10:31:38 to 11:49:06 is 77 min), count the full accurate time!
+        const rangeMatch = line.match(/\*\*(\d{1,2}:\d{2}(?::\d{2})?)\s*[\u2013-]\s*(\d{1,2}:\d{2}(?::\d{2})?)\*\*/);
+        if (rangeMatch) {
+          const spanMin = calculateMinutesBetween(rangeMatch[1], rangeMatch[2]);
+          if (spanMin > 1 && minutes <= 1) {
+            minutes = spanMin;
+          }
+        }
+
+        dateTotals[currentDate] += minutes;
+      }
+    }
+
+    const dates = Object.keys(dateTotals).sort();
+    const dateBreakdown = dates.map((d) => ({
+      date: d,
+      minutes: dateTotals[d],
+      hours: (dateTotals[d] / 60).toFixed(2),
+      files: Array.from(dateFiles[d] || []).slice(0, 30),
+    }));
+
+    const todayMinutes = dateTotals[today] || 0;
+    const totalMinutes = dateBreakdown.reduce((sum, item) => sum + item.minutes, 0);
+    const firstDate = dates.length > 0 ? dates[0] : null;
+
+    return {
+      todayDate: today,
+      todayMinutes,
+      totalMinutes,
+      todayHours: (todayMinutes / 60).toFixed(2),
+      totalHours: (totalMinutes / 60).toFixed(2),
+      dateBreakdown,
+      firstDate,
+    };
+  } catch {
+    return { todayMinutes: 0, totalMinutes: 0, todayHours: "0.00", totalHours: "0.00", dateBreakdown: [], firstDate: null };
+  }
+}
+
 module.exports = {
   BACKLOG_FILENAME,
   LEGACY_BACKLOG_FILENAME,
@@ -201,4 +349,7 @@ module.exports = {
   appendCommit,
   appendSession,
   recordOrUpdateSession,
+  getTimeSummaryFromBacklog,
+  getLocalDateString,
+  calculateMinutesBetween,
 };

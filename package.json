@@ -84,6 +84,11 @@
         "command": "pmConnect.disconnect",
         "title": "PM Connect: Disconnect",
         "icon": "$(plug)"
+      },
+      {
+        "command": "pmConnect.syncTimeFromBacklog",
+        "title": "PM Connect: Sync Project Time from Backlog",
+        "icon": "$(clock)"
       }
     ],
     "viewsContainers": {
@@ -150,13 +155,23 @@
         },
         "pmConnect.custom.baseUrl": {
           "type": "string",
-          "default": "",
-          "description": "Base URL for your Custom REST API."
+          "default": "https://crm.tgailab.site/api/pmconnect",
+          "description": "Base URL for your Custom REST API (the live/production ERP)."
+        },
+        "pmConnect.custom.localBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:5052/api/pmconnect",
+          "description": "Base URL for a local dev instance of the ERP. If reachable, PM Connect prefers this over baseUrl automatically — no manual switching needed. Falls back to baseUrl (the live ERP) whenever local isn't running."
         },
         "pmConnect.custom.siteUrl": {
           "type": "string",
-          "default": "",
-          "description": "Base URL of the Projex website (e.g. http://localhost/projex) for reports."
+          "default": "https://crm.tgailab.site",
+          "description": "Base URL of the live ERP website (e.g. https://crm.tgailab.site) for opening reports."
+        },
+        "pmConnect.custom.localSiteUrl": {
+          "type": "string",
+          "default": "http://localhost:5173",
+          "description": "Base URL of a local dev instance of the ERP website, used for 'Open Report' whenever the local backend is the one currently active."
         },
         "pmConnect.custom.paths": {
           "type": "object",
@@ -201,7 +216,9 @@
   "scripts": {
     "test": "jest",
     "mock-server": "node mock-server/server.js",
-    "package": "vsce package"
+    "package": "vsce package",
+    "install-all": "node scripts/install-all-editors.js",
+    "setup-hook": "node scripts/setup-git-hook.js"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

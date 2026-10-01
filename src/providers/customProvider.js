@@ -2,6 +2,7 @@ const { ProviderError } = require("../providerError");
 const { fetchWithRetry } = require("../httpUtil");
 const { offlineQueue } = require("../offlineQueue");
 const { syncManager } = require("../syncManager");
+const { backendResolver } = require("../backendResolver");
 
 const SECRET_KEY = "pmConnect.custom.apiKey";
 
@@ -16,19 +17,20 @@ const SECRET_KEY = "pmConnect.custom.apiKey";
 const DEFAULT_PATHS = {
   createTask: "/tasks",
   updateStatus: "/tasks/{id}/status",
-  listMyTasks: "/tasks",
+  listMyTasks: "/tasks/mine",
   reportProgress: "/tasks/{id}/progress",
   logTime: "/tasks/{id}/timelog",
   listProjects: "/projects",
-  markProjectStarted: "/project-start",
+  markProjectStarted: "/projects/start",
   logCommitHeartbeat: "/commits",
-  logActiveHeartbeat: "/heartbeat",
+  logActiveHeartbeat: "/activity/heartbeat",
   logDailySummary: "/activity/daily-summary",
   logActivityEntry: "/activity/log-entry",
   getRollup: "/reports/rollup",
   autoCreateProject: "/projects/auto-create",
   getMyRollups: "/my-rollups",
-  autoMatch: "/auto-match",
+  autoMatch: "/projects/auto-match",
+  syncTime: "/sync-time",
 };
 
 /**
@@ -40,8 +42,13 @@ class CustomProvider {
   id = "custom";
   displayName = "Custom / Our Website";
 
+  /**
+   * Local-first, live-fallback: if a local dev ERP is reachable right now,
+   * everything goes there; otherwise everything goes to the live ERP —
+   * automatically, no manual URL switching. See backendResolver.js.
+   */
   getBaseUrl(context) {
-    const baseUrl = context.getConfig("pmConnect.custom.baseUrl", "");
+    const baseUrl = backendResolver.getCachedBaseUrl(context.getConfig);
     if (!baseUrl) {
       throw new ProviderError("Custom provider base URL is not configured.", this.id);
     }
@@ -106,6 +113,7 @@ class CustomProvider {
         "/projects/auto-create": "?action=autocreateproject",
         "/reports/my-rollups": "?action=myrollups",
         "/projects/auto-match": "?action=automatch",
+        "/sync-time": "?action=synctime",
       };
 
       let cleanPath = paths[pathKey] || "";
@@ -274,7 +282,7 @@ class CustomProvider {
   async sendLogWithQueueFallback(pathKey, payload, context, actionName = "log", opts = {}) {
     let apiKey = "";
     let projectId = "";
-    let baseUrl = "http://localhost/projex/api/pmconnect.php";
+    let baseUrl = "";
     let url = "";
     let headers = {};
 
@@ -285,7 +293,7 @@ class CustomProvider {
       }
       projectId = String(rawProjectId);
       apiKey = (await context.getSecret(SECRET_KEY)) || "";
-      baseUrl = context.getConfig("pmConnect.custom.baseUrl", "") || "http://localhost/projex/api/pmconnect.php";
+      baseUrl = backendResolver.getCachedBaseUrl(context.getConfig);
 
       try {
         url = this.getUrl(context, pathKey);
@@ -311,11 +319,51 @@ class CustomProvider {
       });
 
       if (res.status === 404) {
+        if (!opts._retriedAlias) {
+          const ALIAS_FALLBACKS = {
+            logActiveHeartbeat: "/heartbeat",
+            markProjectStarted: "/project-start",
+            autoMatch: "/auto-match",
+          };
+          const fallbackPath = ALIAS_FALLBACKS[pathKey];
+          if (fallbackPath) {
+            const cleanBase = baseUrl.replace(/\/+$/, "");
+            const altUrl = `${cleanBase}${fallbackPath}`;
+            try {
+              const altRes = await fetchWithRetry(altUrl, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(payload),
+              });
+              if (altRes.ok) {
+                return await altRes.json();
+              }
+            } catch {
+              /* ignore fallback error */
+            }
+          }
+        }
         // Endpoint doesn't exist on this backend at all — queueing it would
         // just retry a request that can never succeed, jamming the FIFO for
         // every unrelated entry behind it. Drop silently instead.
         syncManager.log(`[SKIPPED] ${actionName} not supported by this backend (HTTP 404)`);
         return { success: false, skipped: true, reason: "Endpoint not supported (404)" };
+      }
+      if (res.status === 401 && !opts._retriedAuth) {
+        syncManager.log(`[AUTH] 401 received for ${actionName} — attempting auto-refresh of token...`);
+        if (typeof context.refreshAuthToken === "function") {
+          try {
+            const freshKey = await context.refreshAuthToken();
+            if (freshKey) {
+              return await this.sendLogWithQueueFallback(pathKey, payload, context, actionName, {
+                ...opts,
+                _retriedAuth: true,
+              });
+            }
+          } catch {
+            /* ignore */
+          }
+        }
       }
       if (!res.ok) {
         throw new ProviderError(`HTTP ${res.status}`, this.id);
@@ -370,10 +418,10 @@ class CustomProvider {
     );
   }
 
-  async logActiveHeartbeat({ seconds, activeFiles }, context, opts = {}) {
+  async logActiveHeartbeat({ seconds, activeFiles, date }, context, opts = {}) {
     return this.sendLogWithQueueFallback(
       "logActiveHeartbeat",
-      { seconds, activeFiles },
+      { seconds, activeFiles, date },
       context,
       "active heartbeat",
       opts
@@ -398,6 +446,33 @@ class CustomProvider {
       "activity log entry",
       opts
     );
+  }
+
+  /**
+   * Syncs accurate time summary (today's active minutes & cumulative minutes from start)
+   * directly to the ERP. Supports both the new /sync-time endpoint and falls back
+   * to daily-summary + heartbeat for standard ERP backends.
+   */
+  async syncTimeSummary({ projectId, todayMinutes, totalMinutes, dateBreakdown, unsyncedDeltaMinutes = 0, activeFiles = [] }, context, opts = {}) {
+    try {
+      const res = await this.sendLogWithQueueFallback(
+        "syncTime",
+        { projectId, todayMinutes, totalMinutes, dateBreakdown, activeFiles },
+        context,
+        "sync time",
+        { ...opts, projectIdOverride: projectId }
+      );
+      if (res && res.success && !res.skipped) {
+        return res;
+      }
+    } catch {
+      /* fallback below */
+    }
+
+    // Never fallback to incrementing heartbeat seconds from a push/sync event!
+    // Real-time heartbeats are already handled by activityTracker.
+    // Calling heartbeat here would cause double-counting / duplicate minutes on the ERP.
+    return { success: false, skipped: true, reason: "Backend does not support idempotent syncTime" };
   }
 
   /**

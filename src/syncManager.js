@@ -20,14 +20,18 @@ class SyncManager {
     this.outputChannel = null;
     this.statusBar = null;
     this.getProjectId = null;
+    this.getApiKey = null;
+    this.refreshAuthToken = null;
     this.syncInterval = null;
     this.isSyncing = false;
   }
 
-  init({ outputChannel, statusBar, getProjectId = null }) {
+  init({ outputChannel, statusBar, getProjectId = null, getApiKey = null, refreshAuthToken = null }) {
     this.outputChannel = outputChannel;
     this.statusBar = statusBar;
     this.getProjectId = typeof getProjectId === "function" ? getProjectId : null;
+    this.getApiKey = typeof getApiKey === "function" ? getApiKey : null;
+    this.refreshAuthToken = typeof refreshAuthToken === "function" ? refreshAuthToken : null;
     this.updateStatusBar();
   }
 
@@ -130,6 +134,7 @@ class SyncManager {
               "/projects/auto-create": "?action=autocreateproject",
               "/reports/my-rollups": "?action=myrollups",
               "/projects/auto-match": "?action=automatch",
+              "/sync-time": "?action=synctime",
             };
             const mapped = phpMap[entry.endpoint] || `?action=${entry.endpoint.replace(/[^a-zA-Z0-9]/g, "")}`;
             url = `${currentBase}${mapped}`;
@@ -139,11 +144,44 @@ class SyncManager {
             url = entry.url || entry.endpoint;
           }
 
-          const res = await fetch(url, {
+          let requestHeaders = { ...(entry.headers || { "Content-Type": "application/json" }) };
+          if (typeof this.getApiKey === "function") {
+            try {
+              const activeKey = await this.getApiKey();
+              if (activeKey) {
+                requestHeaders["Authorization"] = `Bearer ${activeKey}`;
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+          if (entry.projectId) {
+            requestHeaders["X-Project-Id"] = entry.projectId;
+          }
+
+          let res = await fetch(url, {
             method: entry.method || "POST",
-            headers: entry.headers || { "Content-Type": "application/json" },
+            headers: requestHeaders,
             body: JSON.stringify(entry.payload),
           });
+
+          // If 401, attempt silent token refresh and retry once
+          if (res.status === 401 && typeof this.refreshAuthToken === "function") {
+            this.log(`[SYNC AUTH] 401 on ${entry.endpoint} — refreshing token and retrying...`);
+            try {
+              const freshKey = await this.refreshAuthToken();
+              if (freshKey) {
+                requestHeaders["Authorization"] = `Bearer ${freshKey}`;
+                res = await fetch(url, {
+                  method: entry.method || "POST",
+                  headers: requestHeaders,
+                  body: JSON.stringify(entry.payload),
+                });
+              }
+            } catch {
+              /* ignore */
+            }
+          }
 
           if (res.ok) {
             this.queue.remove(entry.id);
@@ -188,6 +226,7 @@ class SyncManager {
           vscode.window.showInformationMessage(`✅ PM Connect: ${syncedCount} logs synced successfully.`);
         }
       }
+      return syncedCount;
     } finally {
       this.isSyncing = false;
     }

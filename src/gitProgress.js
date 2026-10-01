@@ -81,4 +81,44 @@ function gitRemoteOriginUrl(cwd) {
   }
 }
 
-module.exports = { push, currentCommitSha, latestCommitMessage, newCommitsSince, newCommitsDetail, changedFiles, gitUserEmail, gitRemoteOriginUrl };
+/**
+ * Returns list of modified, added, or untracked file paths in the working tree.
+ */
+function getUncommittedFiles(cwd, limit = 50) {
+  try {
+    const output = run("git status --porcelain", cwd);
+    if (!output) return [];
+    const files = [];
+    const lines = output.split("\n");
+    for (const line of lines) {
+      if (!line || !line.trim()) continue;
+      let filePath = line.replace(/^[A-Za-z?!\s]{1,2}\s+/, "").trim();
+      if (filePath.includes(" -> ")) {
+        filePath = filePath.split(" -> ")[1].trim();
+      }
+      if (filePath.startsWith('"') && filePath.endsWith('"')) {
+        filePath = filePath.slice(1, -1);
+      }
+      filePath = filePath.replace(/\\/g, "/");
+      if (filePath) {
+        files.push(filePath);
+        if (files.length >= limit) break;
+      }
+    }
+    return files;
+  } catch {
+    return [];
+  }
+}
+
+module.exports = {
+  push,
+  currentCommitSha,
+  latestCommitMessage,
+  newCommitsSince,
+  newCommitsDetail,
+  changedFiles,
+  gitUserEmail,
+  gitRemoteOriginUrl,
+  getUncommittedFiles,
+};

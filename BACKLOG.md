@@ -85,7 +85,7 @@
     - `SIMPLE_AUTO_MATCH_PLAN.md`
     - `.vscode/settings.json`
 
-- **14:35:06 – 14:58:06** ⏱️ Active Coding Session (**1 min**)
+- **14:35:06 – 14:58:06** ⏱️ Active Coding Session (**23 min**)
   - 📁 **Files Worked On (1):**
     - `.vscode/settings.json`
 
@@ -144,7 +144,597 @@
   - 📁 **Files Worked On (1):**
     - `.vscode/settings.json`
 
-- **15:46:20 – 15:52:57** ⏱️ Active Coding Session (**5 min**)
-  - 📁 **Files Worked On (2):**
+- **15:46:20 – 15:58:11** ⏱️ Active Coding Session (**6 min**)
+  - 📁 **Files Worked On (9):**
     - `.gitignore`
     - `.git`
+    - `PM-Connect-Backend-Handoff.zip`
+    - `jest.config.js`
+    - `mock-server.log`
+    - `package-lock.json`
+    - `.vscode/settings.json`
+    - `.vscode/settings.json.tmp.2220.2ab0b7bfbe87`
+    - `.vscode`
+
+- **15:59:11 – 16:04:11** ⏱️ Active Coding Session (**4 min**)
+  - 📁 **Files Worked On (14):**
+    - `package.json`
+    - `package.json.tmp.2220.4013b4d018dc`
+    - `src/backendResolver.js`
+    - `src`
+    - `src/providers/customProvider.js`
+    - `src/providers/customProvider.js.tmp.2220.eab394260538`
+    - `src/extension.js`
+    - `package.json.tmp.2220.53eeada10c58`
+    - `handoff-package`
+    - `resources`
+    - `mock-server`
+    - `test`
+    - `.gitignore`
+    - `node_modules`
+
+- **16:15:15 – 16:20:46** ⏱️ Active Coding Session (**6 min**)
+  - 📁 **Files Worked On (1):**
+    - `.gitignore`
+
+- **16:20:51 – 16:30:47** ⏱️ Active Coding Session (**10 min**)
+  - 📁 **Files Worked On (2):**
+    - `.gitignore`
+    - `src/trackerUtils.js`
+
+- **16:34:31 – 17:38:16** ⏱️ Active Coding Session (**64 min**)
+  - 📁 **Files Worked On (30):**
+    - `src/trackerUtils.js`
+    - `SETUP.md`
+    - `PM_CONNECT_GUIDE_ROMAN_URDU.md`
+    - `INTEGRATION.md`
+    - `README.md`
+    - `CODE_ANALYSIS.md`
+    - `AUTOMATIC_TRACKING_PLAN.md`
+    - `SIMPLE_AUTO_MATCH_PLAN.md`
+    - `.git`
+    - `package.json`
+    - `.vscode`
+    - `handoff-package`
+    - `mock-server`
+    - `resources`
+    - `.vscode/settings.json`
+    - `test`
+    - `.gitignore`
+    - `src`
+    - `src/backendResolver.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `node_modules`
+    - `jest.config.js`
+    - `.vscodeignore`
+    - `src/backlogFile.js`
+    - `.vscode/launch.json`
+    - `mock-server.log`
+    - `package-lock.json`
+
+- **15:53** 🌿 Commit `[81ca118]` — **"Initial commit"**
+  - 📁 **Changed Files:** *(none detected)*
+
+## 2026-09-23
+
+- **12:13:19 – 12:41:00** ⏱️ Active Coding Session (**28 min**)
+  - 📁 **Files Worked On (11):**
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `test/backlogFile.test.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `package.json`
+    - `.vscode/settings.json`
+    - `.vscodeignore`
+
+- **13:15:21 – 13:21:39** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (12):**
+    - `handoff-package`
+    - `resources`
+    - `src`
+    - `.vscode`
+    - `mock-server`
+    - `test`
+    - `.gitignore`
+    - `.vscode/settings.json`
+    - `.vscode/launch.json`
+    - `.git`
+    - `src/backlogFile.js`
+    - `src/activityTracker.js`
+
+- **14:42:48 – 14:44:01** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (12):**
+    - `.gitignore`
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `src/backendResolver.js`
+
+- **14:54:14 – 14:54:31** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (11):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `src/backendResolver.js`
+
+- **14:55:18 – 16:31:22** ⏱️ Active Coding Session (**96 min**)
+  - 📁 **Files Worked On (25):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `src/backendResolver.js`
+    - `.vscodeignore`
+    - `SIMPLE_AUTO_MATCH_PLAN.md`
+    - `CODE_ANALYSIS.md`
+    - `.vscode/launch.json`
+    - `.gitignore`
+    - `SETUP.md`
+    - `PM_CONNECT_GUIDE_ROMAN_URDU.md`
+    - `INTEGRATION.md`
+    - `README.md`
+    - `api/pmconnect.php`
+    - `jest.config.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+    - `AUTOMATIC_TRACKING_PLAN.md`
+
+- **16:32:39 – 16:33:04** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (14):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **16:33:34 – 16:48:04** ⏱️ Active Coding Session (**15 min**)
+  - 📁 **Files Worked On (16):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+    - `.vscode/launch.json`
+    - `.gitignore`
+
+- **16:48:53 – 16:48:54** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (14):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **16:49:24 – 16:58:54** ⏱️ Active Coding Session (**10 min**)
+  - 📁 **Files Worked On (14):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **17:00:15 – 17:00:16** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (14):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **17:00:46 – 17:06:16** ⏱️ Active Coding Session (**6 min**)
+  - 📁 **Files Worked On (14):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **17:07:39 – 17:07:40** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (14):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **17:08:10 – 17:36:40** ⏱️ Active Coding Session (**29 min**)
+  - 📁 **Files Worked On (26):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+    - `mock-server.log`
+    - `package-lock.json`
+    - `PM-Connect-Backend-Handoff.zip`
+    - `jest.config.js`
+    - `.vscodeignore`
+    - `README.md`
+    - `AUTOMATIC_TRACKING_PLAN.md`
+    - `CODE_ANALYSIS.md`
+    - `INTEGRATION.md`
+    - `PM_CONNECT_GUIDE_ROMAN_URDU.md`
+    - `SETUP.md`
+    - `SIMPLE_AUTO_MATCH_PLAN.md`
+
+- **17:37:50 – 17:37:51** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (14):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **17:38:21 – 17:42:51** ⏱️ Active Coding Session (**5 min**)
+  - 📁 **Files Worked On (15):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+    - `.vscode/launch.json`
+
+## 2026-09-24
+
+- **13:20:54 – 13:20:55** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (15):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **13:21:25 – 15:13:59** ⏱️ Active Coding Session (**113 min**)
+  - 📁 **Files Worked On (19):**
+    - `.vscode/settings.json`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+    - `.vscode/launch.json`
+    - `scripts/install-all-editors.js`
+    - `scripts/git-hook-tracker.js`
+    - `scripts/setup-git-hook.js`
+- **16:36:34 – 16:39:19** ⏱️ Active Coding Session (**3 min**)
+  - 📁 **Files Worked On (18):**
+    - `src/providers/customProvider.js`
+    - `src/backendResolver.js`
+    - `src/extension.js`
+    - `test/customProvider.test.js`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `api/pmconnect.php`
+    - `scripts/git-hook-tracker.js`
+    - `scripts/install-all-editors.js`
+    - `scripts/setup-git-hook.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+## 2026-09-25
+
+- **10:29:05 – 10:30:12** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (23):**
+    - `src/activityTracker.js`
+    - `package.json`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `test/customProvider.test.js`
+    - `api/pmconnect.php`
+    - `scripts/git-hook-tracker.js`
+    - `scripts/install-all-editors.js`
+    - `scripts/setup-git-hook.js`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+    - `README.md`
+    - `AUTOMATIC_TRACKING_PLAN.md`
+    - `INTEGRATION.md`
+    - `PM_CONNECT_GUIDE_ROMAN_URDU.md`
+    - `SETUP.md`
+
+- **11:03:03 – 11:03:03** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (18):**
+    - `src/backlogFile.js`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `test/customProvider.test.js`
+    - `api/pmconnect.php`
+    - `scripts/git-hook-tracker.js`
+    - `scripts/install-all-editors.js`
+    - `scripts/setup-git-hook.js`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+
+- **12:21:45 – 12:22:05** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (20):**
+    - `src/activityTracker.js`
+    - `package.json`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/gitProgress.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `test/customProvider.test.js`
+    - `api/pmconnect.php`
+    - `scripts/git-hook-tracker.js`
+    - `scripts/install-all-editors.js`
+    - `scripts/setup-git-hook.js`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+    - `test/gitProgress.test.js`
+
+- **12:28:58 – 12:28:58** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (20):**
+    - `src/gitProgress.js`
+    - `package.json`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `test/customProvider.test.js`
+    - `test/gitProgress.test.js`
+    - `api/pmconnect.php`
+    - `scripts/git-hook-tracker.js`
+    - `scripts/install-all-editors.js`
+    - `scripts/setup-git-hook.js`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+- **12:45:20 – 12:46:02** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (20):**
+    - `src/activityTracker.js`
+    - `package.json`
+    - `src/backlogFile.js`
+    - `src/commitTracker.js`
+    - `src/extension.js`
+    - `src/gitProgress.js`
+    - `src/providers/customProvider.js`
+    - `src/syncManager.js`
+    - `src/trackerUtils.js`
+    - `test/activityTracker.test.js`
+    - `test/backlogFile.test.js`
+    - `test/customProvider.test.js`
+    - `test/gitProgress.test.js`
+    - `api/pmconnect.php`
+    - `scripts/git-hook-tracker.js`
+    - `scripts/install-all-editors.js`
+    - `scripts/setup-git-hook.js`
+    - `src/backendResolver.js`
+    - `src/syncedTimeTracker.js`
+    - `test/syncedTimeTracker.test.js`
+- **12:54:07 – 12:54:07** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (4):**
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/gitProgress.js`
+    - `test/gitProgress.test.js`
+
+- **13:02:12 – 13:12:39** ⏱️ Active Coding Session (**10 min**)
+  - 📁 **Files Worked On (4):**
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/gitProgress.js`
+    - `test/gitProgress.test.js`
+
+- **14:29:52 – 15:29:46** ⏱️ Active Coding Session (**60 min**)
+  - 📁 **Files Worked On (12):**
+    - `PM_CONNECT_SETUP_GUIDE.html`
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/gitProgress.js`
+    - `test/gitProgress.test.js`
+    - `scripts/generate-pdf.js`
+    - `PM_CONNECT_SETUP_GUIDE.pdf`
+    - `PM_CONNECT_SETUP_GUIDE.md`
+    - `scripts/calibrate-db.js`
+    - `scripts/calibrate-db.mjs`
+    - `src/providers/customProvider.js`
+    - `scripts/sync-backlog-to-erp.js`
+- **15:31:24 – 15:31:24** ⏱️ Active Coding Session (**1 min**)
+  - 📁 **Files Worked On (8):**
+    - `src/activityTracker.js`
+    - `src/backlogFile.js`
+    - `src/gitProgress.js`
+    - `src/providers/customProvider.js`
+    - `test/gitProgress.test.js`
+    - `PM_CONNECT_SETUP_GUIDE.html`
+    - `PM_CONNECT_SETUP_GUIDE.md`
+    - `PM_CONNECT_SETUP_GUIDE.pdf`
+
+## 2026-09-30
+
+- **23:36:16 – 23:58:23** ⏱️ Active Coding Session (**22 min**)
+  - 📁 **Files Worked On (4):**
+    - `scripts/install-all-editors.js`
+    - `scripts/analyze-work.js`
+    - `scripts/detailed-report.js`
+    - `database.sql`
+
+## 2026-10-01
+
+- **23:36:16 – 00:42:51** ⏱️ Active Coding Session (**67 min**)
+  - 📁 **Files Worked On (17):**
+    - `scripts/install-all-editors.js`
+    - `scripts/analyze-work.js`
+    - `scripts/detailed-report.js`
+    - `database.sql`
+    - `scripts/populate-db.js`
+    - `scratch-insert.sql`
+    - `scratch-daily.sql`
+    - `scripts/update-projex-hours.js`
+    - `temp_db.sql`
+    - `scripts/monthly-report.html`
+    - `PM_CONNECT_MONTHLY_REPORT_SEP2026.pdf`
+    - `scripts/update-timeline.js`
+    - `temp_timeline.sql`
+    - `scripts/add-30-sept-all-tables.js`
+    - `temp_commits.sql`
+    - `scripts/apply-organic-times.js`
+    - `temp_organic.sql`

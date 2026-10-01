@@ -5,7 +5,7 @@ const { syncManager } = require("./syncManager");
 const { activityLog } = require("./activityLog");
 const { appendCommit } = require("./backlogFile");
 
-const FALLBACK_POLL_INTERVAL_MS = 5 * 60 * 1000;
+const FALLBACK_POLL_INTERVAL_MS = 30 * 1000;
 
 /**
  * Silently, automatically detects new git commits for a workspace folder and

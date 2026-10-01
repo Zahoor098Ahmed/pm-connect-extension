@@ -208,4 +208,44 @@ describe("backlogFile", () => {
       fs.rmSync(projectBDir, { recursive: true, force: true });
     }
   });
+
+  describe("calculateMinutesBetween and duration accuracy", () => {
+    const { calculateMinutesBetween, getTimeSummaryFromBacklog, recordOrUpdateSession, getLocalDateString } = require("../src/backlogFile");
+
+    it("calculates accurate minutes between times including seconds and midnight crossing", () => {
+      expect(calculateMinutesBetween("10:31:38", "11:49:06")).toBe(77);
+      expect(calculateMinutesBetween("14:00", "14:45")).toBe(45);
+      expect(calculateMinutesBetween("14:00", "14:05")).toBe(5);
+      expect(calculateMinutesBetween("23:50", "00:20")).toBe(30);
+      expect(calculateMinutesBetween("10:00", "10:00")).toBe(0);
+      expect(calculateMinutesBetween("", "10:00")).toBe(0);
+    });
+
+    it("prevents developer under-counting by calculating true duration when 1 min is erroneously passed", () => {
+      recordOrUpdateSession(tempDir, {
+        startTime: "10:31:38",
+        endTime: "11:49:06",
+        durationMinutes: 1, // bug simulation
+        filesChanged: ["README.md", "frontend"],
+      });
+
+      const filePath = path.join(tempDir, BACKLOG_FILENAME);
+      const content = fs.readFileSync(filePath, "utf8");
+      expect(content).toContain("10:31:38 – 11:49:06");
+      expect(content).toContain("Active Coding Session (**77 min**)");
+      expect(content).not.toContain("Active Coding Session (**1 min**)");
+    });
+
+    it("auto-reconciles legacy 1-min bug entries when parsing time summary from BACKLOG.md", () => {
+      const today = getLocalDateString();
+      const filePath = path.join(tempDir, BACKLOG_FILENAME);
+      const legacyContent = `# Backlog\n\n## ${today}\n\n- **10:31:38 – 11:49:06** ⏱️ Active Coding Session (**1 min**)\n  - 📁 **Files Worked On (2):**\n    - \`README.md\`\n    - \`frontend\`\n`;
+      fs.writeFileSync(filePath, legacyContent, "utf8");
+
+      const summary = getTimeSummaryFromBacklog(tempDir);
+      expect(summary.todayMinutes).toBe(77);
+      expect(summary.todayHours).toBe((77 / 60).toFixed(2));
+    });
+  });
 });
+
