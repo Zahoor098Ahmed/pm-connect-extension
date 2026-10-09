@@ -209,6 +209,11 @@
           "type": "number",
           "default": 5,
           "description": "Minutes of no editor activity before automatic active-time tracking treats you as idle and stops counting."
+        },
+        "pmConnect.includeCommitsInBacklog": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to record git commits into BACKLOG.md. Disabled by default to keep the backlog file lightweight."
         }
       }
     }

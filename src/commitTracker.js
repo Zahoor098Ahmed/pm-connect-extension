@@ -89,16 +89,19 @@ function startCommitTracking(folder, context, providerContext, getActiveProvider
             }
           );
 
-          // Append to this project's BACKLOG.md
-          try {
-            appendCommit(folder, {
-              commitSha: commit.sha,
-              commitMessage: commit.message,
-              filesChanged: files,
-              timestamp: new Date().toISOString(),
-            });
-          } catch {
-            /* silent */
+          // Append to this project's BACKLOG.md (disabled by default to prevent BACKLOG.md from becoming heavy)
+          const includeCommitsInBacklog = providerContext.getConfig("pmConnect.includeCommitsInBacklog", false);
+          if (includeCommitsInBacklog) {
+            try {
+              appendCommit(folder, {
+                commitSha: commit.sha,
+                commitMessage: commit.message,
+                filesChanged: files,
+                timestamp: new Date().toISOString(),
+              });
+            } catch {
+              /* silent */
+            }
           }
 
           if (isConnected) {

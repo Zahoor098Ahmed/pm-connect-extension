@@ -47,14 +47,15 @@ function trackCurrentCommit(projectDir) {
       uri: { fsPath: projectDir },
     };
 
-    appendCommit(folder, {
-      commitSha: sha,
-      commitMessage: message || "Commit",
-      filesChanged: files,
-      timestamp: isoTime || new Date().toISOString(),
-    });
-
-    console.log(`[PM Connect] 🌿 Recorded commit [${sha.slice(0, 7)}] in BACKLOG.md`);
+    if (process.env.PM_CONNECT_INCLUDE_COMMITS_IN_BACKLOG === "true") {
+      appendCommit(folder, {
+        commitSha: sha,
+        commitMessage: message || "Commit",
+        filesChanged: files,
+        timestamp: isoTime || new Date().toISOString(),
+      });
+      console.log(`[PM Connect] 🌿 Recorded commit [${sha.slice(0, 7)}] in BACKLOG.md`);
+    }
   } catch (err) {
     // Silent — git commit must never fail due to tracking
   }
